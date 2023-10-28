@@ -8,6 +8,7 @@ import math
 import csv
 import numpy as np
 import pandas as pd
+from matplotlib import pyplot as plt
 from globals import *
 
 class IVTrace:
@@ -28,3 +29,8 @@ class IVTrace:
         v_float_pos = current_positive.index(min(current_positive))
 
         self.v_float = self.v_bias[v_float_pos]
+
+        plt.plot(self.v_bias, self.current)
+        plt.title('IV Trace')
+        plt.grid()
+        plt.show()
