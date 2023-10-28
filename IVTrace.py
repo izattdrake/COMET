@@ -18,7 +18,6 @@ class IVTrace:
         self.pressure = pressure
         self.probe = probe
         self.type = type
-        self.probe_area = 2 * PI * probe.radius * probe.length
 
         df_iv = pd.read_csv(self.file_path, names=['Current', 'Voltage'])
 
