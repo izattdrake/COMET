@@ -26,23 +26,23 @@ class IVTrace:
         self.i = df_iv['Current']
         self.v_bias = df_iv['Voltage']
 
-        plt.plot(self.v_bias, self.i, 'o--')
-        plt.title('IV Trace')
-        plt.grid()
-        plt.show()
-
         i_positive = np.array([abs(i) for i in self.i])
         v_float_pos = np.where(i_positive == i_positive.min())[0][0]
         self.v_float = self.v_bias[v_float_pos]
 
-        i_e = self.i[v_float_pos:]
-        v_bias_e = self.v_bias[v_float_pos:]
-        poly = self.smooth_poly(v_bias_e, i_e, 5)
+        i_e = self.i[v_float_pos:].to_numpy()
+        v_bias_e = self.v_bias[v_float_pos:].to_numpy()
+        poly = self.smooth_poly(v_bias_e, i_e, 7)
         di_edv_bias = self.d1_poly(poly, v_bias_e)
-        print(di_edv_bias)
         v_plasma_pos = np.where(di_edv_bias == di_edv_bias.max())[0][0]
         print(v_plasma_pos)
         v_plasma = v_bias_e[v_plasma_pos]
+        print(v_plasma)
+
+        plt.plot(self.v_bias, self.i, 'o--')
+        plt.title('IV Trace')
+        plt.grid()
+        plt.show()
 
     def smooth_poly(self, x, y, degree):
         poly_coeff = np.polyfit(x, y, degree)
