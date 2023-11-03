@@ -73,10 +73,11 @@ class IVTrace:
         if type == N:
             v_bohm = math.sqrt(temp_e / (MASS_N_AMU * MASS_P_EV))
 
-        plasma_density = -i_ion/(0.61 * probe.area * v_bohm)
+        plasma_density = -i_ion/(0.61 * CHARGE_E_SI * probe.area * v_bohm)
+
+        print(f'Ion Current: {i_ion}')
         print(f'Bohm Velocity: {v_bohm}')
-        print(f'Plasma Density: {plasma_density}')
-        
+        print(f'Plasma Density: {"{:e}".format(plasma_density)}')
 
     def get_i_ion(self, i, v_bias, v_float, v_float_pos):
         slope, intercept = np.polyfit(v_bias[0:v_float_pos], i[0:v_float_pos], 1)
