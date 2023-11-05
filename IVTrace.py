@@ -33,7 +33,14 @@ class IVTrace:
         #i_e = i_probe - i_ion
         self.ie = self.i - self.i_ion
         self.temp_e = self.get_temp_e(self.ie, self.v_bias, v_float_pos)
+        self.vel_boehm = self.get_vel_bohm(self.temp_e)
         self.plasma_density = self.get_plasma_density(self.i_ion, self.probe, self.temp_e, self.type)
+        self.v_plasma = self.get_v_plasma(self.v_float, self.temp_e)
+
+        print(f'Ion Current: {self.i_ion}')
+        print(f'Bohm Velocity: {self.vel_bohm}')
+        print(f'Plasma Density: {"{:e}".format(self.plasma_density)}')
+        print(f'Plasma Potential: {self.v_plasma}')
 
         """
         poly = self.smooth_poly(self.v_bias, self.i, 10)
@@ -48,36 +55,6 @@ class IVTrace:
         plt.show()
         """
     
-    def get_temp_e(self, ie, v_bias, v_float_pos):
-        # TODO: FIND ZERO CROSSING NOT NECESSARILY V_FLOAT SINCE IF CLOSEST TO ZERO IS NEGATIVE LN WILL THROW NULL VAL
-        ln_ie = np.log(ie)
-
-        # TODO: THINK ABOUT BOUNDS FOR LINEAR FIT TO LN(IE)
-        low = 5
-        high = 10
-
-        slope , intercept = np.polyfit(v_bias[v_float_pos+low:v_float_pos+high], ln_ie[v_float_pos+low:v_float_pos+high], 1)
-        temp_e = 1/slope
-        return temp_e
-        
-        """
-        plt.plot(v_bias[v_float_pos+low:v_float_pos+high], ln_ie[v_float_pos+low:v_float_pos+high])
-        plt.title(f'ln(Electron Current) {self.power}W {self.pressure}mTorr')
-        plt.grid()
-        plt.show()
-        """
-
-    def get_plasma_density(self, i_ion, probe, temp_e, type):
-        if type == AR:
-            v_bohm = math.sqrt(temp_e / (MASS_AR_AMU * MASS_P_EV))
-        if type == N:
-            v_bohm = math.sqrt(temp_e / (MASS_N_AMU * MASS_P_EV))
-
-        plasma_density = -i_ion/(0.61 * CHARGE_E_SI * probe.area * v_bohm)
-
-        print(f'Ion Current: {i_ion}')
-        print(f'Bohm Velocity: {v_bohm}')
-        print(f'Plasma Density: {"{:e}".format(plasma_density)}')
 
     def get_i_ion(self, i, v_bias, v_float, v_float_pos):
         slope, intercept = np.polyfit(v_bias[0:v_float_pos], i[0:v_float_pos], 1)
@@ -89,9 +66,9 @@ class IVTrace:
         poly = np.poly1d(poly_coeff)
         return poly 
     
-    def d1_poly(self, poly, x_vals):
-        poly_d_1 = poly.deriv(1)
-        y_vals = poly_d_1(x_vals)
+    def dn_poly(self, poly, x_vals, n):
+        dn = poly.deriv(n)
+        y_vals = dn(x_vals)
         return y_vals
     
     def get_min_pos(self, y_vals):
@@ -103,3 +80,40 @@ class IVTrace:
         v_float = v_bias[v_float_pos]
         return v_float
     
+    def get_temp_e(self, ie, v_bias, v_float_pos):
+        # TODO: FIND ZERO CROSSING NOT NECESSARILY V_FLOAT SINCE IF CLOSEST TO ZERO IS NEGATIVE LN WILL THROW NULL VAL
+        ln_ie = np.log(ie)
+
+        # TODO: THINK ABOUT BOUNDS FOR LINEAR FIT TO LN(IE)
+        low = 5
+        high = 10
+
+        slope, intercept = np.polyfit(v_bias[v_float_pos+low:v_float_pos+high], ln_ie[v_float_pos+low:v_float_pos+high], 1)
+        temp_e = 1/slope
+        return temp_e
+        
+        """
+        plt.plot(v_bias[v_float_pos+low:v_float_pos+high], ln_ie[v_float_pos+low:v_float_pos+high])
+        plt.title(f'ln(Electron Current) {self.power}W {self.pressure}mTorr')
+        plt.grid()
+        plt.show()
+        """
+
+    def get_vel_bohm(self, temp_e, type=AR):
+        if type == AR:
+            vel_bohm = math.sqrt(temp_e / (MASS_AR_AMU * MASS_P_EV))
+        if type == N:
+            vel_bohm = math.sqrt(temp_e / (MASS_N_AMU * MASS_P_EV))
+        return vel_bohm
+        
+    def get_plasma_density(self, i_ion, probe, temp_e, type=AR):
+        vel_bohm = self.get_vel_bohm(temp_e, type)
+        plasma_density = -i_ion/(0.61 * CHARGE_E_SI * probe.area * vel_bohm)
+        return plasma_density
+        
+    def get_v_plasma(self, v_float, temp_e, type=AR):
+        if type == AR:
+            v_plasma = v_float + 5.2 * MASS_AR_AMU * temp_e
+        if type == N:
+            v_plasma = v_float + 5.2 * MASS_N_AMU * temp_e
+        return v_plasma
