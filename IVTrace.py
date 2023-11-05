@@ -36,11 +36,6 @@ class IVTrace:
         self.plasma_density = self.get_plasma_density(self.i_ion, self.probe, self.temp_e, self.type)
         self.v_plasma = self.get_v_plasma(self.v_float, self.temp_e)
 
-        print(f'Ion Current: {-self.i_ion}')
-        print(f'Bohm Velocity: {self.vel_bohm}')
-        print(f'Plasma Density: {"{:e}".format(self.plasma_density)}')
-        print(f'Plasma Potential: {self.v_plasma}')
-
         self.write_plasma()
     
     def plot(self, x_vals, y_vals, title, show=True):
@@ -117,7 +112,7 @@ class IVTrace:
     def get_v_plasma(self, v_float, temp_e, type=AR):
         if type == AR:
             amu = MASS_AR_AMU
-        if type == N:
+        elif type == N:
             amu = MASS_N_AMU
         v_plasma = v_float + temp_e * (3.34 + 0.5 * math.log(amu))
         return v_plasma
