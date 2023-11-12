@@ -99,9 +99,11 @@ class IVTrace:
 
     def get_vel_bohm(self, temp_e, type=AR):
         if type == AR:
-            vel_bohm = math.sqrt(temp_e / (MASS_AR_AMU * MASS_P_EV))
-        if type == N:
-            vel_bohm = math.sqrt(temp_e / (MASS_N_AMU * MASS_P_EV))
+            amu = MASS_AR_AMU
+        elif type == N:
+            amu = MASS_N_AMU
+
+        vel_bohm = math.sqrt(temp_e / (amu * MASS_P_EV))
         return vel_bohm
         
     def get_plasma_density(self, i_ion, probe, temp_e, type=AR):
