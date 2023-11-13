@@ -4,7 +4,6 @@ Created on Fri Oct 27 22:03:52 2023
 @author: izattdrake
 """
 
-import math
 from Probe import Probe
 from IVTrace import IVTrace
 from globals import *
