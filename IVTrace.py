@@ -12,7 +12,6 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 from globals import *
-np.set_printoptions(threshold=sys.maxsize)
 
 class IVTrace:
 
@@ -40,12 +39,10 @@ class IVTrace:
 
         self.eedf = self.get_eedf(self.ie, self.v_bias, self.v_float, self.v_plasma, self.probe)
         # self.write_plasma(False, False)
-        sys.exit()
     
     def get_eedf(self, ie, v_bias, v_float, v_plasma, probe):
         v_float_pos = self.get_nearest_pos(v_bias, v_float)
         v_plasma_pos = self.get_nearest_pos(v_bias, v_plasma)
-        #min_pos = np.where(y_vals_positive == y_vals_positive.min())[0][0]
 
         delta_v = [val for val in (v_plasma - v_bias) if (val >= 0 and val <= v_bias.max())]
         sqrt_delta_v = np.sqrt(delta_v)
@@ -58,8 +55,8 @@ class IVTrace:
             val_EV = val_SI * J_TO_EV
             list.append(val_EV)
         eedf = np.array(list)
-        print(eedf)
-        self.plot(delta_v, np.flip(eedf), "EEDF vs v_plasma - v_bias")
+
+        # self.plot(delta_v, np.flip(eedf), "EEDF vs v_plasma - v_bias")
         return eedf
     
     def get_i_ion(self, i, v_bias, v_float, v_float_pos):
