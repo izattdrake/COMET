@@ -38,49 +38,30 @@ class IVTrace:
         self.plasma_density = self.get_plasma_density(self.i_ion, self.probe, self.temp_e_low, self.type)
         self.v_plasma = self.get_v_plasma(self.v_float, self.temp_e_low)
 
-        self.write_plasma()
+        self.eedf = self.get_eedf(self.ie, self.v_bias, self.v_float, self.v_plasma, self.probe)
+        # self.write_plasma(False, False)
+        sys.exit()
     
-    def plot(self, x_vals, y_vals, title, show=True):
-        plt.plot(x_vals, y_vals, 'o--')
-        plt.title(title)
-        plt.grid()
-        
-        if show:
-            plt.show()
+    def get_eedf(self, ie, v_bias, v_float, v_plasma, probe):
+        v_float_pos = self.get_nearest_pos(v_bias, v_float)
+        v_plasma_pos = self.get_nearest_pos(v_bias, v_plasma)
+        #min_pos = np.where(y_vals_positive == y_vals_positive.min())[0][0]
 
-    def write_plasma(self):
-        lines = [
-            f'Plasma Type: {self.type}',
-            f'Probe Length: {self.probe.length} m',
-            f'Probe Radius: {self.probe.radius} m',
-            f'Pressure: {self.pressure} mTorr',
-            f'Power: {self.power} W',
-            f'Floating Potential: {self.v_float} V',
-            f'Ion Current: {-self.i_ion} A',
-            f'Electron Temperature Low: {self.temp_e_low} eV',
-            f'Electron Temperature High: {self.temp_e_high} eV',
-            f'Bohm Velocity: {self.vel_bohm} m/s',
-            f'Plasma Density: {"{:e}".format(self.plasma_density)} m^-3',
-            f'Plasma Potential: {self.v_plasma} V'
-        ]
+        delta_v = [val for val in (v_plasma - v_bias) if (val >= 0 and val <= v_bias.max())]
+        sqrt_delta_v = np.sqrt(delta_v)
 
-        label = f'{self.pressure}mTorr_{self.power}W'
-        path_output_IVTrace = f'output/IVTrace/{label}'
-        os.makedirs(path_output_IVTrace, exist_ok=True)
-        path_txt = f'{path_output_IVTrace}/{label}.txt'
-        path = os.path.join(os.path.dirname(__file__), path_txt)
-
-        with open(path, 'w') as file:
-            file.write('\n'.join(lines))
-
-        self.plot(self.v_bias, self.i, f'IV Trace {label}', show=False)
-        plt.savefig(f'{path_output_IVTrace}/IVTrace_{label}.png')
-        plt.clf()
-
-        self.plot(self.v_bias, np.log(self.ie), f'ln(Electron Current) vs Bias Voltage {label}', show=False)
-        plt.savefig(f'{path_output_IVTrace}/ln(ie)_{label}.png')
-        plt.clf()
-
+        poly = self.smooth_poly(v_bias, ie, 9)
+        d2_ie = self.dn_poly(poly, delta_v, 2)
+        list = []
+        for i in range(d2_ie.size):
+            val_SI = 2 * math.sqrt(2) * MASS_E_SI * sqrt_delta_v[i] * d2_ie[i] / (probe.area * CHARGE_E_SI**(3/2))
+            val_EV = val_SI * J_TO_EV
+            list.append(val_EV)
+        eedf = np.array(list)
+        print(eedf)
+        self.plot(delta_v, np.flip(eedf), "EEDF vs v_plasma - v_bias")
+        return eedf
+    
     def get_i_ion(self, i, v_bias, v_float, v_float_pos):
         slope, intercept = np.polyfit(v_bias[0:v_float_pos], i[0:v_float_pos], 1)
         i_ion = slope * v_float + intercept
@@ -91,20 +72,18 @@ class IVTrace:
         return v_float
     
     def get_temp_e(self, ie, v_bias, v_float_pos):
-        # TODO: FIND ZERO CROSSING NOT NECESSARILY V_FLOAT SINCE IF CLOSEST TO ZERO IS NEGATIVE LN WILL THROW NULL VAL
         ln_ie = np.log(ie)
 
         low_pos_low = self.get_first_pos(ln_ie)
         high_pos_low = low_pos_low + 2
         slope, intercept = np.polyfit(v_bias[low_pos_low:high_pos_low], ln_ie[low_pos_low:high_pos_low], 1)
-
         temp_e_low = 1/slope
-        print(temp_e_low)
 
         low_pos_high = self.get_nearest_pos(v_bias, 20)
         high_pos_high = self.get_nearest_pos(v_bias, 25)
         slope, intercept = np.polyfit(v_bias[low_pos_high:high_pos_high], ln_ie[low_pos_high:high_pos_high], 1)
         temp_e_high = 1/slope
+
         return temp_e_low, temp_e_high
 
     def get_vel_bohm(self, temp_e, type=AR):
@@ -112,7 +91,6 @@ class IVTrace:
             amu = MASS_AR_AMU
         elif type == N:
             amu = MASS_N_AMU
-
         vel_bohm = math.sqrt(temp_e / (amu * MASS_P_EV))
         return vel_bohm
         
@@ -155,3 +133,45 @@ class IVTrace:
                 first_pos = np.where(vals == val)[0][0]
                 return first_pos
         
+    def plot(self, x_vals, y_vals, title, show=True):
+        plt.plot(x_vals, y_vals, 'o--')
+        plt.title(title)
+        plt.grid()
+        
+        if show:
+            plt.show()
+
+    def write_plasma(self, write_data=True, write_graphs=True):
+        lines = [
+            f'Plasma Type: {self.type}',
+            f'Probe Length: {self.probe.length} m',
+            f'Probe Radius: {self.probe.radius} m',
+            f'Pressure: {self.pressure} mTorr',
+            f'Power: {self.power} W',
+            f'Floating Potential: {self.v_float} V',
+            f'Ion Current: {-self.i_ion} A',
+            f'Electron Temperature Low: {self.temp_e_low} eV',
+            f'Electron Temperature High: {self.temp_e_high} eV',
+            f'Bohm Velocity: {self.vel_bohm} m/s',
+            f'Plasma Density: {"{:e}".format(self.plasma_density)} m^-3',
+            f'Plasma Potential: {self.v_plasma} V'
+        ]
+
+        label = f'{self.pressure}mTorr_{self.power}W'
+        path_output_IVTrace = f'output/IVTrace/{label}'
+        os.makedirs(path_output_IVTrace, exist_ok=True)
+        path_txt = f'{path_output_IVTrace}/{label}.txt'
+        path = os.path.join(os.path.dirname(__file__), path_txt)
+
+        if write_data:
+            with open(path, 'w') as file:
+                file.write('\n'.join(lines))
+
+        if write_graphs:
+            self.plot(self.v_bias, self.i, f'IV Trace {label}', show=False)
+            plt.savefig(f'{path_output_IVTrace}/IVTrace_{label}.png')
+            plt.clf()
+
+            self.plot(self.v_bias, np.log(self.ie), f'ln(Electron Current) vs Bias Voltage {label}', show=False)
+            plt.savefig(f'{path_output_IVTrace}/ln(ie)_{label}.png')
+            plt.clf()
