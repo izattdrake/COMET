@@ -5,14 +5,12 @@ Created on Fri Oct 27 22:04:16 2023
 """
 
 import math
-import sys
 import csv
 import os
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 from globals import *
-np.set_printoptions(threshold=sys.maxsize)
 
 class IVTrace:
 
@@ -40,52 +38,20 @@ class IVTrace:
 
         self.write_plasma()
     
-    def plot(self, x_vals, y_vals, title, show=True):
-        plt.plot(x_vals, y_vals, 'o--')
-        plt.title(title)
-        plt.grid()
-        
-        if show:
-            plt.show()
-
-    def write_plasma(self):
-        lines = [
-            f'Plasma Type: {self.type}',
-            f'Probe Length: {self.probe.length} m',
-            f'Probe Radius: {self.probe.radius} m',
-            f'Pressure: {self.pressure} mTorr',
-            f'Power: {self.power} W',
-            f'Floating Potential: {self.v_float} V',
-            f'Ion Current: {-self.i_ion} A',
-            f'Electron Temperature Low: {self.temp_e_low} eV',
-            f'Electron Temperature High: {self.temp_e_high} eV',
-            f'Bohm Velocity: {self.vel_bohm} m/s',
-            f'Plasma Density: {"{:e}".format(self.plasma_density)} m^-3',
-            f'Plasma Potential: {self.v_plasma} V'
-        ]
-
-        label = f'{self.pressure}mTorr_{self.power}W'
-        path_output_IVTrace = f'output/IVTrace/{label}'
-        os.makedirs(path_output_IVTrace, exist_ok=True)
-        path_txt = f'{path_output_IVTrace}/{label}.txt'
-        path = os.path.join(os.path.dirname(__file__), path_txt)
-
-        with open(path, 'w') as file:
-            file.write('\n'.join(lines))
-
-        self.plot(self.v_bias, self.i, f'IV Trace {label}', show=False)
-        plt.savefig(f'{path_output_IVTrace}/IVTrace_{label}.png')
-        plt.clf()
-
-        self.plot(self.v_bias, np.log(self.ie), f'ln(Electron Current) vs Bias Voltage {label}', show=False)
-        plt.savefig(f'{path_output_IVTrace}/ln(ie)_{label}.png')
-        plt.clf()
-
+    def get_delta_v(self, v_bias, v_plasma):
+        delta_v = -(v_bias - v_plasma)
+        return delta_v
+    
     def get_i_ion(self, i, v_bias, v_float, v_float_pos):
         slope, intercept = np.polyfit(v_bias[0:v_float_pos], i[0:v_float_pos], 1)
         i_ion = slope * v_float + intercept
         return i_ion
-            
+        
+    def get_ie_delta_v(self):
+        poly_ie = self.smooth_poly()
+        
+
+
     def get_v_float(self, v_bias, v_float_pos):
         v_float = v_bias[v_float_pos]
         return v_float
@@ -153,3 +119,43 @@ class IVTrace:
                 first_pos = np.where(vals == val)[0][0]
                 return first_pos
         
+    def plot(self, x_vals, y_vals, title, show=True):
+        plt.plot(x_vals, y_vals, 'o--')
+        plt.title(title)
+        plt.grid()
+        
+        if show:
+            plt.show()
+
+    def write_plasma(self):
+        lines = [
+            f'Plasma Type: {self.type}',
+            f'Probe Length: {self.probe.length} m',
+            f'Probe Radius: {self.probe.radius} m',
+            f'Pressure: {self.pressure} mTorr',
+            f'Power: {self.power} W',
+            f'Floating Potential: {self.v_float} V',
+            f'Ion Current: {-self.i_ion} A',
+            f'Electron Temperature Low: {self.temp_e_low} eV',
+            f'Electron Temperature High: {self.temp_e_high} eV',
+            f'Bohm Velocity: {self.vel_bohm} m/s',
+            f'Plasma Density: {"{:e}".format(self.plasma_density)} m^-3',
+            f'Plasma Potential: {self.v_plasma} V'
+        ]
+
+        label = f'{self.pressure}mTorr_{self.power}W'
+        path_output_IVTrace = f'output/IVTrace/{label}'
+        os.makedirs(path_output_IVTrace, exist_ok=True)
+        path_txt = f'{path_output_IVTrace}/{label}.txt'
+        path = os.path.join(os.path.dirname(__file__), path_txt)
+
+        with open(path, 'w') as file:
+            file.write('\n'.join(lines))
+
+        self.plot(self.v_bias, self.i, f'IV Trace {label}', show=False)
+        plt.savefig(f'{path_output_IVTrace}/IVTrace_{label}.png')
+        plt.clf()
+
+        self.plot(self.v_bias, np.log(self.ie), f'ln(Electron Current) vs Bias Voltage {label}', show=False)
+        plt.savefig(f'{path_output_IVTrace}/ln(ie)_{label}.png')
+        plt.clf()
