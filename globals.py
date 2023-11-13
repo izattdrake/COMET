@@ -8,7 +8,7 @@ H = 'Hydrogen'
 AR = 'Argon'
 N = 'Nitrogen'
 
-PI = 3.141592653589
+PI = 3.14159
 
 CHARGE_E_SI = 1.60218 * 10**(-19)
 KB_SI = 1.381 * 10**(-23)

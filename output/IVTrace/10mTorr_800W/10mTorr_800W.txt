@@ -1,6 +1,6 @@
 Plasma Type: Argon
 Probe Length: 0.01 m
-Probe Radius: 0.0015 m
+Probe Radius: 0.0005 m
 Pressure: 10 mTorr
 Power: 800 W
 Floating Potential: 7.997226238 V
@@ -8,5 +8,5 @@ Ion Current: 4.675475778475375e-05 A
 Electron Temperature Low: 0.33533880250264875 eV
 Electron Temperature High: 7.492186598768735 eV
 Bohm Velocity: 896.707307106729 m/s
-Plasma Density: 5.660605e+15 m^-3
+Plasma Density: 1.698183e+16 m^-3
 Plasma Potential: 9.735551935693262 V
