@@ -36,24 +36,30 @@ class IVTrace:
         self.vel_bohm = self.get_vel_bohm(self.temp_e_low)
         self.plasma_density = self.get_plasma_density(self.i_ion, self.probe, self.temp_e_low, self.type)
         self.v_plasma = self.get_v_plasma(self.v_float, self.temp_e_low)
-
-        self.eedf = self.get_eedf(self.ie, self.v_bias, self.v_float, self.v_plasma, self.probe)
-        # self.write_plasma(False, False)
+        self.delta_v = self.get_delta_v(self.v_bias, self.v_plasma)
+        self.eedf = self.get_eedf(self.ie, self.v_bias, self.v_float, self.v_plasma, self.delta_v, self.probe)
+        self.write_plasma()
     
-    def get_eedf(self, ie, v_bias, v_float, v_plasma, probe):
+    def get_delta_v(self, v_bias, v_plasma):
+        delta_v = [val for val in (v_plasma - v_bias) if (val >= 0 and val <= v_bias.max())]
+        return delta_v
+
+    def get_eedf(self, ie, v_bias, v_float, v_plasma, delta_v, probe):
         v_float_pos = self.get_nearest_pos(v_bias, v_float)
         v_plasma_pos = self.get_nearest_pos(v_bias, v_plasma)
 
-        delta_v = [val for val in (v_plasma - v_bias) if (val >= 0 and val <= v_bias.max())]
         sqrt_delta_v = np.sqrt(delta_v)
 
         poly = self.smooth_poly(v_bias, ie, 9)
         d2_ie = self.dn_poly(poly, delta_v, 2)
+        
         list = []
         for i in range(d2_ie.size):
-            val_SI = 2 * math.sqrt(2) * MASS_E_SI * sqrt_delta_v[i] * d2_ie[i] / (probe.area * CHARGE_E_SI**(3/2))
-            val_EV = val_SI * J_TO_EV
-            list.append(val_EV)
+            val = 2 * math.sqrt(2 * MASS_E_SI / CHARGE_E_SI**3) / probe.area
+            print('{:e}'.format(val))
+            val = val * sqrt_delta_v[i] * d2_ie[i]
+            list.append(val)
+
         eedf = np.array(list)
 
         # self.plot(delta_v, np.flip(eedf), "EEDF vs v_plasma - v_bias")
@@ -138,7 +144,7 @@ class IVTrace:
         if show:
             plt.show()
 
-    def write_plasma(self, write_data=True, write_graphs=True):
+    def write_plasma(self, write_data=True, write_figs=True):
         lines = [
             f'Plasma Type: {self.type}',
             f'Probe Length: {self.probe.length} m',
@@ -164,7 +170,7 @@ class IVTrace:
             with open(path, 'w') as file:
                 file.write('\n'.join(lines))
 
-        if write_graphs:
+        if write_figs:
             self.plot(self.v_bias, self.i, f'IV Trace {label}', show=False)
             plt.savefig(f'{path_output_IVTrace}/IVTrace_{label}.png')
             plt.clf()
@@ -172,3 +178,9 @@ class IVTrace:
             self.plot(self.v_bias, np.log(self.ie), f'ln(Electron Current) vs Bias Voltage {label}', show=False)
             plt.savefig(f'{path_output_IVTrace}/ln(ie)_{label}.png')
             plt.clf()
+
+            self.plot(self.delta_v, np.flip(self.eedf), f'EEDF {label}', show=False)
+            plt.savefig(f'{path_output_IVTrace}/eedf.png')
+            plt.clf()
+
+        
