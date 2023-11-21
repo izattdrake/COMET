@@ -8,18 +8,20 @@ import math
 import os
 from matplotlib import pyplot as plt
 from Probe import Probe
+from Plasma import Plasma
 from IVTrace import IVTrace
 from globals import *
 
 def main():
-    plot_figs = True
+    plot_figs = False
     probe = Probe(radius=0.5*10**(-3), length=0.01)
     pressure = 10
     power_vals = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
     trace_vals = []
     for power in power_vals:
         file_path = f'.\\data\\{pressure}mTorr_{power}W.csv'
-        trace = IVTrace(file_path, power, pressure, probe=probe)
+        plasma = Plasma(file_path, power, pressure, probe)
+        trace = IVTrace(file_path, power, pressure, probe)
         trace_vals.append(trace)
     
     if plot_figs:

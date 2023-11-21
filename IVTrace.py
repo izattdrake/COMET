@@ -38,10 +38,11 @@ class IVTrace:
         self.v_plasma = self.get_v_plasma(self.v_float, self.temp_e_low)
         self.delta_v = self.get_delta_v(self.v_bias, self.v_plasma)
         self.eedf = self.get_eedf(self.ie, self.v_bias, self.v_float, self.v_plasma, self.delta_v, self.probe)
-        self.write_plasma()
+        # self.write_plasma()
     
     def get_delta_v(self, v_bias, v_plasma):
         delta_v = [val for val in (v_plasma - v_bias) if (val >= 0 and val <= v_bias.max())]
+        delta_v.reverse()
         return delta_v
 
     def get_eedf(self, ie, v_bias, v_float, v_plasma, delta_v, probe):
@@ -50,19 +51,21 @@ class IVTrace:
 
         sqrt_delta_v = np.sqrt(delta_v)
 
+        delta_v_full = [val for val in (v_plasma - v_bias)]
+        delta_v_full.reverse()
         poly = self.smooth_poly(v_bias, ie, 9)
         d2_ie = self.dn_poly(poly, delta_v, 2)
         
         list = []
         for i in range(d2_ie.size):
-            val = 2 * math.sqrt(2 * MASS_E_SI / CHARGE_E_SI**3) / probe.area
-            print('{:e}'.format(val))
-            val = val * sqrt_delta_v[i] * d2_ie[i]
+            const = 2 * math.sqrt(2 * MASS_E_SI / CHARGE_E_SI**3) / probe.area
+            # print('{:e}'.format(val))
+            val = const * sqrt_delta_v[i] * d2_ie[i]
             list.append(val)
 
         eedf = np.array(list)
-
-        # self.plot(delta_v, np.flip(eedf), "EEDF vs v_plasma - v_bias")
+        self.plot(delta_v, list, "EEDF")
+        sys.exit()
         return eedf
     
     def get_i_ion(self, i, v_bias, v_float, v_float_pos):
