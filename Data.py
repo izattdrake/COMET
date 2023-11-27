@@ -23,7 +23,7 @@ class Data:
         @file_paths: Data path locations
         """
         self.file_paths = file_paths
-        self.plasmas = []
+        self.plasmas: list[Plasma] = []
     
         for file_path in self.file_paths:
             i, v_bias = __class__.read_file(file_path)
@@ -37,39 +37,44 @@ class Data:
              
             self.plasmas.append(plasma)          
 
-    def write_plasmas(self, write_txt: bool = True, write_figs: bool = True) -> None:
-        if write_txt:
-            for plasma in self.plasmas:
-                lines = [
-                    f'Plasma Type: {plasma.type}',
-                    f'Probe Length: {plasma.probe.length} m',
-                    f'Probe Radius: {plasma.probe.radius} m',
-                    f'Pressure: {plasma.pressure} mTorr',
-                    f'Power: {plasma.power} W',
-                    f'Floating Potential: {plasma.v_float} V',
-                    f'Ion Current: {-plasma.i_ion} A',
-                    f'Electron Temperature: {plasma.temp_e} eV',
-                    f'Plasma Density: {"{:e}".format(plasma.density)} m^-3',
-                    f'Plasma Potential: {plasma.v_plasma} V'
-                ]
+    def write_plasmas(self) -> None:
+        """
+        Saves plasma data to an output folder. Currently, calculated plasma parameters are saved to a text file
+        while plots of the IVTrace, the log of electron current (used to calculate electron temperature),
+        electron energy distribution function, and a comparison of plasma parameters varying with
+        power are saved
+        """
+        for plasma in self.plasmas:
+            lines = [
+                f'Plasma Type: {plasma.type}',
+                f'Probe Length: {plasma.probe.length} m',
+                f'Probe Radius: {plasma.probe.radius} m',
+                f'Pressure: {plasma.pressure} mTorr',
+                f'Power: {plasma.power} W',
+                f'Floating Potential: {plasma.v_float} V',
+                f'Ion Current: {-plasma.i_ion} A',
+                f'Electron Temperature: {plasma.temp_e} eV',
+                f'Plasma Density: {"{:e}".format(plasma.density)} m^-3',
+                f'Plasma Potential: {plasma.v_plasma} V'
+            ]
 
-                path_output = f'output/{self.label}'
-                os.makedirs(path_output, exist_ok=True)
-                path_txt = f'{path_output}/{label}.txt'
-                path = os.path.join(os.path.dirname(__file__), path_txt)
+            plasma_label = f'{plasma.pressure}mTorr_{plasma.power}W_{plasma.freq}KHz'
+            folder_path = os.path.join(os.path.dirname(__file__), f'output/{plasma_label}')
+            os.makedirs(folder_path, exist_ok=True)
 
-        if write_figs:
-            self.plot(self.v_bias, self.i, f'IV Trace {label}', show=False)
-            plt.savefig(f'{path_output_IVTrace}/IVTrace_{label}.png')
-            plt.clf()
+            with open(f'{folder_path}/parameters.txt', 'w') as txt:
+                txt.write('n'.join(lines))
 
-            self.plot(self.v_bias, np.log(self.ie), f'ln(Electron Current) vs Bias Voltage {label}', show=False)
-            plt.savefig(f'{path_output_IVTrace}/ln(ie)_{label}.png')
-            plt.clf()
+            self.plot(plasma.v_bias, plasma.i, x_label='Bias Voltage (V)', 
+                      y_label='Current (A)', title=f'IV Trace', show=False, write_path=f'{folder_path}/IVTrace.png')
 
-            self.plot(self.delta_v, np.flip(self.eedf), f'EEDF {label}', show=False)
-            plt.savefig(f'{path_output_IVTrace}/eedf.png')
-            plt.clf()
+            self.plot(plasma.v_bias, np.log(plasma.ie), x_label='Bias Voltage (V)',
+                      y_label='Log(Ie)', title=f'log(Electron Current) vs Bias Voltage', 
+                      show=False, write_path=f'{folder_path}/log.png')
+
+            self.plot(self.delta_v, np.flip(self.eedf), x_label='Plasma Potential - Bias',
+                      y_label='EEDF', title='Electron Energy Distribution Function', show=False,
+                      write_path=f'{folder_path}/EEDF.png')
 
     @staticmethod
     def read_file(file_path: str) -> tuple[list[float], list[float]]:
@@ -88,20 +93,26 @@ class Data:
         return col1, col2
 
     @staticmethod 
-    def plot(x_vals: list[float], y_vals: list[float], title: str, show: bool = True) -> None:
+    def plot(x_vals: list[float], y_vals: list[float], x_label: str = None, y_label: str = None, 
+             title: str = None, show: bool = True, write_path: str = None) -> None:
         """
         Streamlines matplotlib functionality in a single method
         @x_vals: Values on the horizontal axis
         @y_vals: Values on the vertical axis
-        @title: Title of figure
-        @show: Show the figure or not
+        @x_label: Label on the horizontal axis
+        @y_label: Label on the vertical axis
+        @title: Title of plot
+        @show: Show the plot or not
+        @write_path: Path to save plot if desired
         """
         plt.plot(x_vals, y_vals, 'o--')
         plt.title(title)
+        if x_label: plt.xlabel(x_label)
+        if y_label: plt.ylabel(y_label)
+        if title: plt.title(title)
         plt.grid()
-        
-        if show:
-            plt.show()
+        if show: plt.show()
+        if write_path: plt.savefig(write_path)
 
         plt.clf()
         
