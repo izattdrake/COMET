@@ -9,21 +9,25 @@ import os
 from matplotlib import pyplot as plt
 from Probe import Probe
 from Plasma import Plasma
-from IVTrace import IVTrace
+from Data import Data
 from globals import *
+from utilities import *
 
 def main():
     plot_figs = False
     probe = Probe(radius=0.5*10**(-3), length=0.01)
     pressure = 10
-    power_vals = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
-    trace_vals = []
-    for power in power_vals:
-        file_path = f'.\\data\\{pressure}mTorr_{power}W.csv'
-        plasma = Plasma(file_path, power, pressure, probe)
-        trace = IVTrace(file_path, power, pressure, probe)
-        trace_vals.append(trace)
+    freq = 13.6
+    powers = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
+    file_paths = []
+
+    for power in powers:
+        file_path = f'.\\input\\{pressure}mTorr_{power}W_{freq}KHz.csv'
+        file_paths.append(file_path)
+
+    data = Data(file_paths, probe)
     
+    """
     if plot_figs:
         path_figs = f'output/IVTrace/VsPower'
         os.makedirs(path_figs, exist_ok=True)
@@ -74,30 +78,7 @@ def main():
         plt.grid()
         plt.savefig(f'{path_figs}/plasma_potential.png')
         plt.clf()
-
     """
-        if show:
-            plt.show()
-
-        label = f'{self.pressure}mTorr_{self.power}W'
-        path_output_IVTrace = f'output/IVTrace/{label}'
-        os.makedirs(path_output_IVTrace, exist_ok=True)
-        path_txt = f'{path_output_IVTrace}/{label}.txt'
-        path = os.path.join(os.path.dirname(__file__), path_txt)
-
-        if write_data:
-            with open(path, 'w') as file:
-                file.write('\n'.join(lines))
-
-        if write_graphs:
-            self.plot(self.v_bias, self.i, f'IV Trace {label}', show=False)
-            plt.savefig(f'{path_output_IVTrace}/IVTrace_{label}.png')
-            plt.clf()
-
-            self.plot(self.v_bias, np.log(self.ie), f'ln(Electron Current) vs Bias Voltage {label}', show=False)
-            plt.savefig(f'{path_output_IVTrace}/ln(ie)_{label}.png')
-            plt.clf()
-        """
-    
+        
 if __name__ == '__main__':
     main()
