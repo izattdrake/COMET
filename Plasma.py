@@ -12,7 +12,20 @@ from globals import *
 from utilities import *
 
 class Plasma:
+    """
+    Object that contains and computes plasma parameters 
+    """
     def __init__(self, i: list[float], v_bias: list[float], pressure: float, power: float, freq: float, probe: Probe, type: str = AR):
+        """
+        @i: The langmuir probe's induced current
+        @v_bias: The voltage applied to langmuir probe from SMU
+        @pressure: The COMET chamber's pressure
+        @power: The power applied by COMET power supplies
+        @freq: The frequency of applied RF signal. Usually 13.56 or 60KHz
+        @probe: The langmuir probe's properties
+        @type: The plasma matter
+        """
+        
         self.pressure = pressure
         self.power = power
         self.freq = freq

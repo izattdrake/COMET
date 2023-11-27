@@ -16,7 +16,7 @@ from globals import *
 
 class Data:
     """
-    Contains an arbitrary amount of plasmas and holds data analysis methods for them
+    Contains an arbitrary amount of plasmas and data analysis methods for them
     """
     def __init__(self, file_paths: list[str], probe: Probe = None):
         """
@@ -37,7 +37,7 @@ class Data:
              
             self.plasmas.append(plasma)          
 
-    def write_plasmas(self, write_txt: bool = True, write_figs: bool = True):
+    def write_plasmas(self, write_txt: bool = True, write_figs: bool = True) -> None:
         if write_txt:
             for plasma in self.plasmas:
                 lines = [
