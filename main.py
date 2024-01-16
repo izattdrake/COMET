@@ -16,16 +16,18 @@ from utilities import *
 def main():
     plot_figs = False
     probe = Probe(radius=0.5*10**(-3), length=0.01)
-    pressure = 10
-    freq = 13.6
-    powers = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
+    pressures = [3.8, 8.2, 17.6, 31.5, 66.6]
+    freq = 13.56
+    powers = [100, 500, 1000]
     file_paths = []
 
     for power in powers:
-        file_path = f'.\\input\\{pressure}mTorr_{power}W_{freq}KHz.csv'
-        file_paths.append(file_path)
+        for pressure in pressures:
+            file_path = f'./input/Satadal/{pressure}mTorr_{power}W_{freq}MHz.csv'
+            file_paths.append(file_path)
 
     data = Data(file_paths, probe)
+    data.write_plasmas()
     
     """
     if plot_figs:

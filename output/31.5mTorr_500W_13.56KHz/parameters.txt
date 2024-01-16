@@ -1,0 +1,1 @@
+Plasma Type: ArgonnProbe Length: 0.01 mnProbe Radius: 0.0005 mnPressure: 31.5 mTorrnPower: 500 WnFloating Potential: 9.998933792 VnIon Current: 7.176253661498249e-05 AnElectron Temperature: 0.7497984710216475 eVnPlasma Density: 1.743115e+16 m^-3nPlasma Potential: 13.885731086380366 V

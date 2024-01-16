@@ -35,7 +35,11 @@ class Data:
 
             plasma = Plasma(i, v_bias, pressure, power, freq, probe)   
              
-            self.plasmas.append(plasma)          
+            self.plasmas.append(plasma)         
+
+    def write_compiled(self) -> None:
+        compiled_path = os.path.join(os.path.dirname(__file__), f'output/')
+        
 
     def write_plasmas(self) -> None:
         """
@@ -44,7 +48,13 @@ class Data:
         electron energy distribution function, and a comparison of plasma parameters varying with
         power are saved
         """
+
+        compiled_path = os.path.join(os.path.dirname(__file__), f'output/compiled.csv')
+        compiled_rows = []
         for plasma in self.plasmas:
+            compiled_rows.append([plasma.pressure, plasma.power, plasma.freq, plasma.v_float, 
+                                  plasma.v_plasma, -plasma.i_ion, plasma.temp_e, 
+                                  plasma.density])
             lines = [
                 f'Plasma Type: {plasma.type}',
                 f'Probe Length: {plasma.probe.length} m',
@@ -66,16 +76,27 @@ class Data:
                 txt.write('n'.join(lines))
 
             self.plot(plasma.v_bias, plasma.i, x_label='Bias Voltage (V)', 
-                      y_label='Current (A)', title=f'IV Trace', show=False, write_path=f'{folder_path}/IVTrace.png')
+                    y_label='Current (A)', title=f'IV Trace', show=False, write_path=f'{folder_path}/IVTrace.png')
 
             self.plot(plasma.v_bias, np.log(plasma.ie), x_label='Bias Voltage (V)',
-                      y_label='Log(Ie)', title=f'log(Electron Current) vs Bias Voltage', 
-                      show=False, write_path=f'{folder_path}/log.png')
+                    y_label='Log(Ie)', title=f'log(Electron Current) vs Bias Voltage', 
+                    show=False, write_path=f'{folder_path}/log.png')
 
+            """
             self.plot(self.delta_v, np.flip(self.eedf), x_label='Plasma Potential - Bias',
-                      y_label='EEDF', title='Electron Energy Distribution Function', show=False,
-                      write_path=f'{folder_path}/EEDF.png')
+                    y_label='EEDF', title='Electron Energy Distribution Function', show=False,
+                    write_path=f'{folder_path}/EEDF.png')
+            """
 
+        with open(compiled_path, 'w') as compiled_file:
+            compiled_writer = csv.writer(compiled_file)
+            compiled_writer.writerow(['Pressure', 'Power', 'Frequency', 
+                                      'Floating Potential', 'Plasma Potential', 'Ion Current', 'Temperature', 'Density'])
+            compiled_writer.writerows(compiled_rows)
+
+            #Graph floating potentials, ion current, temp, density, plasma potential
+        
+                
     @staticmethod
     def read_file(file_path: str) -> tuple[list[float], list[float]]:
         """
